@@ -1,0 +1,1435 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>CyberCrisis — Rollenspel</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --bg: #050d14;
+  --neon: #00ffe7;
+  --neon2: #ff2d78;
+  --neon3: #ffe600;
+  --dim: #0a1a28;
+  --panel: rgba(0,255,231,0.06);
+  --border: rgba(0,255,231,0.25);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  font-family: 'Share Tech Mono', monospace;
+  color: var(--neon);
+  overflow-x: hidden;
+}
+
+/* Scanline effect */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.05) 2px, rgba(0,0,0,0.05) 4px);
+  z-index: 9999;
+}
+
+#gameWrapper {
+  position: relative;
+  width: 960px;
+  max-width: 100vw;
+  padding: 0 12px;
+}
+
+/* ─── HEADER ─────────────────────────────────────────────── */
+#header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 4px 10px;
+}
+#header h1 {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 20px;
+  font-weight: 900;
+  letter-spacing: 3px;
+  color: var(--neon);
+  text-shadow: 0 0 15px var(--neon);
+}
+#progressDots {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.prog-dot {
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  border: 2px solid var(--neon);
+  background: transparent;
+  transition: 0.4s;
+}
+.prog-dot.done {
+  background: var(--neon);
+  box-shadow: 0 0 10px var(--neon);
+}
+.prog-dot.active {
+  border-color: var(--neon3);
+  box-shadow: 0 0 8px var(--neon3);
+  animation: dotPulse 1s ease infinite;
+}
+@keyframes dotPulse {
+  0%,100% { box-shadow: 0 0 4px var(--neon3); }
+  50% { box-shadow: 0 0 14px var(--neon3); }
+}
+
+/* ─── INTRO SCREEN ───────────────────────────────────────── */
+#introScreen {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 680px;
+  max-width: 96vw;
+  background: rgba(5,13,20,0.98);
+  border: 2px solid var(--neon);
+  border-radius: 16px;
+  padding: 44px 48px;
+  box-shadow: 0 0 80px rgba(0,255,231,0.2), 0 0 200px rgba(0,255,231,0.05);
+  z-index: 200;
+  animation: fadeIn 0.5s ease;
+}
+@keyframes fadeIn {
+  from { opacity:0; transform: translate(-50%,-52%) scale(0.97); }
+  to   { opacity:1; transform: translate(-50%,-50%) scale(1); }
+}
+.intro-badge {
+  display: inline-block;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 10px;
+  letter-spacing: 4px;
+  color: var(--neon2);
+  border: 1px solid var(--neon2);
+  border-radius: 4px;
+  padding: 4px 12px;
+  margin-bottom: 18px;
+  text-shadow: 0 0 8px var(--neon2);
+  box-shadow: 0 0 10px rgba(255,45,120,0.2);
+  animation: badgeBlink 2s ease infinite;
+}
+@keyframes badgeBlink {
+  0%,100% { opacity:1; }
+  50% { opacity:0.6; }
+}
+#introScreen h2 {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 26px;
+  font-weight: 900;
+  color: var(--neon);
+  text-shadow: 0 0 20px var(--neon);
+  margin-bottom: 6px;
+  letter-spacing: 2px;
+}
+.intro-company {
+  font-size: 12px;
+  letter-spacing: 3px;
+  color: rgba(0,255,231,0.4);
+  margin-bottom: 28px;
+}
+.incident-box {
+  background: rgba(255,45,120,0.05);
+  border: 1px solid rgba(255,45,120,0.3);
+  border-radius: 10px;
+  padding: 18px 22px;
+  margin-bottom: 20px;
+}
+.incident-box .ib-label {
+  font-size: 10px;
+  letter-spacing: 3px;
+  color: var(--neon2);
+  margin-bottom: 10px;
+}
+.incident-box p {
+  font-size: 14px;
+  line-height: 1.75;
+  color: #cce0ea;
+}
+.facts-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 28px;
+}
+.fact-item {
+  background: rgba(0,255,231,0.04);
+  border: 1px solid rgba(0,255,231,0.15);
+  border-radius: 8px;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.fact-item .fi-icon { font-size: 20px; }
+.fact-item .fi-text { font-size: 12px; line-height: 1.5; color: #aaccdd; }
+.fact-item .fi-text strong { color: var(--neon); display: block; font-size: 13px; }
+
+.intro-cta {
+  text-align: center;
+}
+.intro-cta p {
+  font-size: 13px;
+  color: rgba(0,255,231,0.5);
+  margin-bottom: 18px;
+  letter-spacing: 1px;
+}
+#btnStartGame {
+  padding: 15px 48px;
+  background: var(--neon);
+  color: #020d14;
+  border: none;
+  border-radius: 10px;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 15px;
+  font-weight: 900;
+  letter-spacing: 3px;
+  cursor: pointer;
+  transition: 0.2s;
+  box-shadow: 0 0 30px rgba(0,255,231,0.4);
+}
+#btnStartGame:hover {
+  filter: brightness(1.15);
+  box-shadow: 0 0 50px rgba(0,255,231,0.6);
+  transform: translateY(-1px);
+}
+
+/* ─── ROLE REVEAL SCREEN ─────────────────────────────────── */
+#roleRevealScreen {
+  display: none;
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 520px;
+  max-width: 96vw;
+  background: rgba(5,13,20,0.98);
+  border: 2px solid var(--neon3);
+  border-radius: 16px;
+  padding: 44px 48px;
+  box-shadow: 0 0 80px rgba(255,230,0,0.15);
+  z-index: 200;
+  text-align: center;
+  animation: fadeIn 0.4s ease;
+}
+#roleRevealScreen .rr-label {
+  font-size: 10px;
+  letter-spacing: 4px;
+  color: rgba(255,230,0,0.6);
+  margin-bottom: 10px;
+  font-family: 'Orbitron', sans-serif;
+}
+#roleRevealScreen h2 {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 18px;
+  color: var(--neon3);
+  text-shadow: 0 0 15px var(--neon3);
+  margin-bottom: 24px;
+  letter-spacing: 2px;
+}
+#roleCard {
+  background: rgba(255,230,0,0.05);
+  border: 2px solid rgba(255,230,0,0.3);
+  border-radius: 12px;
+  padding: 28px 24px;
+  margin-bottom: 24px;
+  animation: cardAppear 0.6s ease 0.2s both;
+}
+@keyframes cardAppear {
+  from { transform: scale(0.85) rotate(-3deg); opacity:0; }
+  to   { transform: scale(1) rotate(0deg); opacity:1; }
+}
+#roleCard .rc-icon { font-size: 56px; margin-bottom: 12px; }
+#roleCard .rc-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 20px;
+  font-weight: 900;
+  color: var(--neon3);
+  text-shadow: 0 0 12px var(--neon3);
+  letter-spacing: 2px;
+  margin-bottom: 6px;
+}
+#roleCard .rc-sub {
+  font-size: 12px;
+  color: rgba(255,230,0,0.5);
+  letter-spacing: 2px;
+  margin-bottom: 16px;
+}
+#roleCard .rc-desc {
+  font-size: 13px;
+  line-height: 1.7;
+  color: #cce0ea;
+}
+#btnStartPlay {
+  padding: 13px 36px;
+  background: var(--neon3);
+  color: #020d14;
+  border: none;
+  border-radius: 8px;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  cursor: pointer;
+  transition: 0.2s;
+  box-shadow: 0 0 20px rgba(255,230,0,0.3);
+}
+#btnStartPlay:hover {
+  filter: brightness(1.1);
+  box-shadow: 0 0 40px rgba(255,230,0,0.5);
+}
+
+/* ─── MAIN GAME LAYOUT ───────────────────────────────────── */
+#gameLayout {
+  display: none;
+  gap: 18px;
+  align-items: flex-start;
+}
+.game-main {
+  flex: 1;
+  min-width: 0;
+}
+.game-sidebar {
+  width: 260px;
+  flex-shrink: 0;
+}
+
+/* Role card (sidebar) */
+#sideRoleCard {
+  border: 2px solid rgba(255,230,0,0.4);
+  border-radius: 14px;
+  padding: 20px 18px;
+  background: rgba(255,230,0,0.04);
+  box-shadow: 0 0 20px rgba(255,230,0,0.08);
+  margin-bottom: 14px;
+  position: sticky;
+  top: 20px;
+}
+#sideRoleCard .src-label {
+  font-size: 9px;
+  letter-spacing: 4px;
+  color: rgba(255,230,0,0.5);
+  margin-bottom: 12px;
+  font-family: 'Orbitron', sans-serif;
+}
+.src-icon-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.src-icon-row .src-icon { font-size: 34px; }
+.src-icon-row .src-name {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--neon3);
+  text-shadow: 0 0 8px var(--neon3);
+  letter-spacing: 1px;
+  line-height: 1.3;
+}
+.src-icon-row .src-sub {
+  font-size: 10px;
+  color: rgba(255,230,0,0.4);
+  letter-spacing: 1px;
+}
+#sideRoleCard .src-focus-label {
+  font-size: 9px;
+  letter-spacing: 3px;
+  color: rgba(0,255,231,0.4);
+  margin-bottom: 6px;
+}
+#sideRoleCard .src-focus {
+  font-size: 12px;
+  line-height: 1.6;
+  color: #aaccdd;
+  border-left: 2px solid rgba(0,255,231,0.2);
+  padding-left: 10px;
+}
+
+/* Score tickers */
+#sideTickers {
+  border: 2px solid rgba(0,255,231,0.15);
+  border-radius: 14px;
+  padding: 16px 16px;
+  background: rgba(0,255,231,0.02);
+}
+#sideTickers .st-label {
+  font-size: 9px;
+  letter-spacing: 4px;
+  color: rgba(0,255,231,0.4);
+  margin-bottom: 12px;
+  font-family: 'Orbitron', sans-serif;
+}
+.ticker-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.ticker-row:last-child { margin-bottom: 0; }
+.ticker-icon { font-size: 16px; width: 20px; text-align: center; }
+.ticker-name { font-size: 11px; color: rgba(200,220,230,0.6); flex: 1; }
+.ticker-bar-wrap {
+  width: 70px;
+  height: 6px;
+  background: rgba(255,255,255,0.07);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.ticker-bar {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.5s ease;
+}
+.ticker-bar.money  { background: #22c55e; box-shadow: 0 0 6px #22c55e; }
+.ticker-bar.rep    { background: #60a5fa; box-shadow: 0 0 6px #60a5fa; }
+.ticker-bar.legal  { background: #a78bfa; box-shadow: 0 0 6px #a78bfa; }
+.ticker-bar.hr     { background: #fb923c; box-shadow: 0 0 6px #fb923c; }
+
+/* ─── SCENARIO PANEL ─────────────────────────────────────── */
+#scenarioPanel {
+  border: 2px solid var(--border);
+  border-radius: 14px;
+  padding: 22px 24px;
+  background: var(--panel);
+  margin-bottom: 16px;
+  min-height: 180px;
+  box-shadow: 0 0 30px rgba(0,255,231,0.04);
+}
+.sp-phase {
+  font-size: 9px;
+  letter-spacing: 4px;
+  color: rgba(0,255,231,0.4);
+  margin-bottom: 8px;
+  font-family: 'Orbitron', sans-serif;
+}
+.sp-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 17px;
+  font-weight: 700;
+  color: #e8f8ff;
+  margin-bottom: 14px;
+  letter-spacing: 1px;
+}
+.sp-text {
+  font-size: 13.5px;
+  line-height: 1.8;
+  color: #9bc4d8;
+}
+
+/* ─── DILEMMA PANEL ──────────────────────────────────────── */
+#dilemmaPanel {
+  border: 2px solid rgba(0,255,231,0.3);
+  border-radius: 14px;
+  padding: 22px 24px;
+  background: rgba(0,255,231,0.03);
+}
+.dp-question {
+  font-size: 15px;
+  line-height: 1.65;
+  color: #e0f4fa;
+  margin-bottom: 18px;
+  font-weight: bold;
+}
+.choices-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.choice-btn {
+  padding: 14px 18px;
+  border: 2px solid rgba(0,255,231,0.2);
+  border-radius: 10px;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 13.5px;
+  background: rgba(0,255,231,0.03);
+  color: #c0dde8;
+  cursor: pointer;
+  transition: 0.15s;
+  text-align: left;
+  line-height: 1.55;
+}
+.choice-btn:hover:not(:disabled) {
+  border-color: var(--neon);
+  background: rgba(0,255,231,0.09);
+  color: var(--neon);
+  transform: translateX(4px);
+}
+.choice-btn:disabled { cursor: default; }
+.choice-btn.selected {
+  border-color: var(--neon);
+  background: rgba(0,255,231,0.1);
+  color: var(--neon);
+}
+.choice-btn.not-selected {
+  opacity: 0.35;
+}
+
+/* ─── FEEDBACK BOX ───────────────────────────────────────── */
+#feedbackBox {
+  display: none;
+  margin-top: 16px;
+  padding: 16px 18px;
+  border-radius: 10px;
+  font-size: 13.5px;
+  line-height: 1.7;
+  animation: fadeIn 0.3s ease;
+}
+#feedbackBox.positive {
+  background: rgba(34,197,94,0.07);
+  border: 1px solid rgba(34,197,94,0.3);
+  color: #86efac;
+}
+#feedbackBox.neutral {
+  background: rgba(245,158,11,0.07);
+  border: 1px solid rgba(245,158,11,0.3);
+  color: #fde68a;
+}
+#feedbackBox.negative {
+  background: rgba(255,45,120,0.07);
+  border: 1px solid rgba(255,45,120,0.3);
+  color: #fca5a5;
+}
+#feedbackBox .fb-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 11px;
+  letter-spacing: 2px;
+  margin-bottom: 6px;
+  opacity: 0.7;
+}
+
+#btnNext {
+  display: none;
+  margin-top: 18px;
+  padding: 12px 32px;
+  background: var(--neon);
+  color: #020d14;
+  border: none;
+  border-radius: 8px;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+#btnNext:hover { filter: brightness(1.15); }
+
+/* ─── RESULT SCREEN ──────────────────────────────────────── */
+#resultScreen {
+  display: none;
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 720px;
+  max-width: 96vw;
+  background: rgba(5,13,20,0.98);
+  border: 2px solid var(--neon);
+  border-radius: 16px;
+  padding: 44px 44px;
+  text-align: center;
+  z-index: 200;
+  box-shadow: 0 0 80px rgba(0,255,231,0.2);
+  animation: fadeIn 0.4s ease;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+#resultScreen h2 {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 26px;
+  margin-bottom: 6px;
+  text-shadow: 0 0 20px var(--neon);
+}
+#resultScreen .rs-sub {
+  font-size: 11px;
+  letter-spacing: 4px;
+  color: rgba(0,255,231,0.4);
+  margin-bottom: 30px;
+}
+.final-role-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255,230,0,0.07);
+  border: 1px solid rgba(255,230,0,0.3);
+  border-radius: 10px;
+  padding: 10px 20px;
+  margin-bottom: 28px;
+}
+.final-role-badge span { font-size: 22px; }
+.final-role-badge strong {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 13px;
+  color: var(--neon3);
+  letter-spacing: 1px;
+}
+
+.impact-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 30px;
+  text-align: left;
+}
+.impact-card {
+  border: 2px solid rgba(255,255,255,0.08);
+  border-radius: 10px;
+  padding: 16px 18px;
+  transition: 0.3s;
+}
+.impact-card.money  { border-color: rgba(34,197,94,0.4);  background: rgba(34,197,94,0.05); }
+.impact-card.rep    { border-color: rgba(96,165,250,0.4); background: rgba(96,165,250,0.05); }
+.impact-card.legal  { border-color: rgba(167,139,250,0.4);background: rgba(167,139,250,0.05); }
+.impact-card.hr     { border-color: rgba(251,146,60,0.4); background: rgba(251,146,60,0.05); }
+
+.impact-card .ic-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.impact-card .ic-icon { font-size: 20px; }
+.impact-card .ic-name { font-family: 'Orbitron', sans-serif; font-size: 11px; letter-spacing: 1px; }
+.impact-card.money  .ic-name { color: #4ade80; }
+.impact-card.rep    .ic-name { color: #93c5fd; }
+.impact-card.legal  .ic-name { color: #c4b5fd; }
+.impact-card.hr     .ic-name { color: #fdba74; }
+
+.impact-card .ic-bar-wrap {
+  width: 100%;
+  height: 8px;
+  background: rgba(255,255,255,0.07);
+  border-radius: 4px;
+  margin-bottom: 8px;
+  overflow: hidden;
+}
+.impact-card .ic-bar { height: 100%; border-radius: 4px; transition: width 1s ease; }
+.impact-card.money .ic-bar  { background: #22c55e; box-shadow: 0 0 8px #22c55e; }
+.impact-card.rep   .ic-bar  { background: #60a5fa; box-shadow: 0 0 8px #60a5fa; }
+.impact-card.legal .ic-bar  { background: #a78bfa; box-shadow: 0 0 8px #a78bfa; }
+.impact-card.hr    .ic-bar  { background: #fb923c; box-shadow: 0 0 8px #fb923c; }
+
+.impact-card .ic-desc { font-size: 12px; color: rgba(180,210,225,0.7); line-height: 1.5; }
+
+.verdict-box {
+  background: rgba(0,255,231,0.04);
+  border: 1px solid rgba(0,255,231,0.2);
+  border-radius: 10px;
+  padding: 18px 22px;
+  margin-bottom: 24px;
+  text-align: left;
+}
+.verdict-box .vb-label {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 10px;
+  letter-spacing: 3px;
+  color: rgba(0,255,231,0.4);
+  margin-bottom: 8px;
+}
+.verdict-box .vb-text {
+  font-size: 13px;
+  line-height: 1.75;
+  color: #9bc4d8;
+}
+
+#btnRestart {
+  padding: 14px 40px;
+  background: transparent;
+  color: var(--neon);
+  border: 2px solid var(--neon);
+  border-radius: 10px;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+#btnRestart:hover {
+  background: var(--neon);
+  color: #020d14;
+  box-shadow: 0 0 20px rgba(0,255,231,0.4);
+}
+
+/* Controls hint */
+#controlsHint {
+  text-align: center;
+  font-size: 12px;
+  color: rgba(0,255,231,0.3);
+  padding: 8px 0 12px;
+  letter-spacing: 2px;
+}
+
+/* ─── DISCUSSION TIMER BANNER ────────────────────────────── */
+#timerBanner {
+  display: none;
+  align-items: center;
+  gap: 16px;
+  background: rgba(255,230,0,0.05);
+  border: 2px solid rgba(255,230,0,0.35);
+  border-radius: 12px;
+  padding: 12px 18px;
+  margin-bottom: 16px;
+  box-shadow: 0 0 24px rgba(255,230,0,0.08);
+  animation: fadeIn 0.3s ease;
+}
+.tb-ring-wrap {
+  position: relative;
+  width: 54px;
+  height: 54px;
+  flex-shrink: 0;
+}
+.tb-ring-wrap svg {
+  transform: rotate(-90deg);
+  width: 54px;
+  height: 54px;
+}
+.tb-track {
+  fill: none;
+  stroke: rgba(255,230,0,0.12);
+  stroke-width: 5;
+}
+.tb-fill {
+  fill: none;
+  stroke: var(--neon3);
+  stroke-width: 5;
+  stroke-linecap: round;
+  stroke-dasharray: 138.23;
+  stroke-dashoffset: 0;
+  transition: stroke-dashoffset 1s linear, stroke 0.4s ease;
+  filter: drop-shadow(0 0 4px rgba(255,230,0,0.5));
+}
+.tb-fill.urgent {
+  stroke: var(--neon2);
+  filter: drop-shadow(0 0 6px rgba(255,45,120,0.9));
+}
+.tb-num {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  font-family: 'Orbitron', sans-serif;
+  font-size: 13px;
+  font-weight: 900;
+  color: var(--neon3);
+  text-shadow: 0 0 8px var(--neon3);
+  pointer-events: none;
+  transition: color 0.3s;
+}
+.tb-num.urgent {
+  color: var(--neon2);
+  text-shadow: 0 0 8px var(--neon2);
+  animation: urgentPulse 0.5s ease infinite;
+}
+@keyframes urgentPulse {
+  0%,100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+.tb-text {
+  flex: 1;
+  min-width: 0;
+}
+.tb-text .tb-label {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 10px;
+  letter-spacing: 3px;
+  color: rgba(255,230,0,0.55);
+  margin-bottom: 4px;
+}
+.tb-text .tb-msg {
+  font-size: 13px;
+  color: #c8dde8;
+  line-height: 1.55;
+}
+.tb-text .tb-msg strong { color: #e8f8ff; }
+#btnSkipTimer {
+  padding: 8px 18px;
+  background: transparent;
+  color: rgba(0,255,231,0.4);
+  border: 1px solid rgba(0,255,231,0.18);
+  border-radius: 7px;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 10px;
+  letter-spacing: 2px;
+  cursor: pointer;
+  transition: 0.2s;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+#btnSkipTimer:hover {
+  color: var(--neon);
+  border-color: rgba(0,255,231,0.5);
+  background: rgba(0,255,231,0.06);
+}
+
+/* Locked choices during timer */
+.choices-locked .choice-btn {
+  cursor: not-allowed !important;
+  pointer-events: none;
+  opacity: 0.45;
+  border-color: rgba(0,255,231,0.1) !important;
+  color: rgba(150,190,210,0.5) !important;
+}
+/* Locked dilemma panel border */
+.panel-locked {
+  border-color: rgba(0,255,231,0.1) !important;
+}
+</style>
+</head>
+<body>
+
+<div id="gameWrapper">
+  <div id="header">
+    <h1>⬡ CYBERCRISIS</h1>
+    <div id="progressDots">
+      <div class="prog-dot active" id="dot0"></div>
+      <div class="prog-dot" id="dot1"></div>
+      <div class="prog-dot" id="dot2"></div>
+      <div class="prog-dot" id="dot3"></div>
+    </div>
+  </div>
+
+  <!-- ─── INTRO SCREEN ───────────────────────────────── -->
+  <div id="introScreen">
+    <div class="intro-badge">⚠ BEVEILIGINGSINCIDENT ACTIEF</div>
+    <h2>CYBERCRISIS</h2>
+    <div class="intro-company">CYBER BV — INCIDENT RAPPORT #2024-CR-047</div>
+    <div class="incident-box">
+      <div class="ib-label">▶ SITUATIESCHETS</div>
+      <p>
+        Het is maandagochtend 03:47 uur. CYBER BV — een middelgroot IT-bedrijf met 420 medewerkers — wordt getroffen door een grootschalige ransomware-aanval. Criminelen hebben zich toegang verschaft via een gecompromitteerd medewerkerswachtwoord. Kritieke systemen zijn vergrendeld. De aanvallers eisen <strong style="color:var(--neon2)">€ 500.000</strong> losgeld en dreigen persoonsgegevens van <strong style="color:var(--neon2)">50.000 klanten</strong> te publiceren als er niet binnen 48 uur betaald wordt.
+      </p>
+    </div>
+    <div class="facts-grid">
+      <div class="fact-item">
+        <span class="fi-icon">🕐</span>
+        <div class="fi-text"><strong>48 uur</strong>deadline van de aanvallers</div>
+      </div>
+      <div class="fact-item">
+        <span class="fi-icon">💾</span>
+        <div class="fi-text"><strong>50.000 klantdossiers</strong>mogelijk gestolen</div>
+      </div>
+      <div class="fact-item">
+        <span class="fi-icon">💰</span>
+        <div class="fi-text"><strong>€ 500.000</strong>losgeldbedrag geëist</div>
+      </div>
+      <div class="fact-item">
+        <span class="fi-icon">🖥️</span>
+        <div class="fi-text"><strong>80% systemen</strong>offline / vergrendeld</div>
+      </div>
+    </div>
+    <div class="intro-cta">
+      <p>Jij krijgt een rol in het crisisteam. Welke beslissingen neem jij?</p>
+      <button id="btnStartGame">NEEM JE ROL →</button>
+    </div>
+  </div>
+
+  <!-- ─── ROLE REVEAL SCREEN ─────────────────────────── -->
+  <div id="roleRevealScreen">
+    <div class="rr-label">JE BENT TOEGEWEZEN ALS</div>
+    <h2>JOUW ROL</h2>
+    <div id="roleCard">
+      <div class="rc-icon" id="rc-icon">?</div>
+      <div class="rc-title" id="rc-title">–</div>
+      <div class="rc-sub" id="rc-sub">–</div>
+      <div class="rc-desc" id="rc-desc">–</div>
+    </div>
+    <button id="btnStartPlay">START SPELRONDE →</button>
+  </div>
+
+  <!-- ─── MAIN GAME ──────────────────────────────────── -->
+  <div id="gameLayout" style="display:none; flex-direction:column; gap:0;">
+
+    <!-- Timer banner sits above the main row -->
+    <div id="timerBanner">
+      <div class="tb-ring-wrap">
+        <svg viewBox="0 0 54 54">
+          <circle class="tb-track" cx="27" cy="27" r="22"/>
+          <circle class="tb-fill" id="timerRing" cx="27" cy="27" r="22"/>
+        </svg>
+        <div class="tb-num" id="timerNumber">60</div>
+      </div>
+      <div class="tb-text">
+        <div class="tb-label">💬 TEAMOVERLEG — BESPREEK MET ELKAAR</div>
+        <div class="tb-msg">Lees de casus en overleg vanuit <strong>jouw rol</strong>. Welke keuze maak jij — en waarom? De opties worden klikbaar zodra de timer afloopt.</div>
+      </div>
+      <button id="btnSkipTimer">⏭ SKIP</button>
+    </div>
+
+    <!-- Main content row -->
+    <div style="display:flex; gap:18px; align-items:flex-start;">
+    <div class="game-main">
+      <div id="scenarioPanel">
+        <div class="sp-phase" id="sp-phase">FASE 1 VAN 4</div>
+        <div class="sp-title" id="sp-title">–</div>
+        <div class="sp-text" id="sp-text">–</div>
+      </div>
+      <div id="dilemmaPanel">
+        <div class="dp-question" id="dp-question">–</div>
+        <div class="choices-list" id="choicesList"></div>
+        <div id="feedbackBox">
+          <div class="fb-title" id="fb-title">JOUW PERSPECTIEF</div>
+          <div id="fb-text">–</div>
+        </div>
+        <button id="btnNext">VOLGENDE FASE →</button>
+      </div>
+    </div>
+    <div class="game-sidebar">
+      <div id="sideRoleCard">
+        <div class="src-label">JOUW ROL</div>
+        <div class="src-icon-row">
+          <div class="src-icon" id="src-icon">?</div>
+          <div>
+            <div class="src-name" id="src-name">–</div>
+            <div class="src-sub" id="src-sub">–</div>
+          </div>
+        </div>
+        <div class="src-focus-label">FOCUSGEBIED</div>
+        <div class="src-focus" id="src-focus">–</div>
+      </div>
+      <div id="sideTickers" style="display:none;">
+        <div class="st-label">BEDRIJFSIMPACT</div>
+        <div class="ticker-row">
+          <span class="ticker-icon">💰</span>
+          <span class="ticker-name">Financieel</span>
+          <div class="ticker-bar-wrap"><div class="ticker-bar money" id="bar-money" style="width:50%"></div></div>
+        </div>
+        <div class="ticker-row">
+          <span class="ticker-icon">📣</span>
+          <span class="ticker-name">Reputatie</span>
+          <div class="ticker-bar-wrap"><div class="ticker-bar rep" id="bar-rep" style="width:50%"></div></div>
+        </div>
+        <div class="ticker-row">
+          <span class="ticker-icon">⚖️</span>
+          <span class="ticker-name">Juridisch</span>
+          <div class="ticker-bar-wrap"><div class="ticker-bar legal" id="bar-legal" style="width:50%"></div></div>
+        </div>
+        <div class="ticker-row">
+          <span class="ticker-icon">👥</span>
+          <span class="ticker-name">Medewerkers</span>
+          <div class="ticker-bar-wrap"><div class="ticker-bar hr" id="bar-hr" style="width:50%"></div></div>
+        </div>
+      </div>
+    </div>
+    </div><!-- end inner flex row -->
+  </div><!-- end gameLayout -->
+  <div id="controlsHint" style="display:none;">LEES DE CASUS · BESPREEK MET JE TEAM · KIES JOUW ACTIE VANUIT JE ROL</div>
+
+  <!-- ─── RESULT SCREEN ─────────────────────────────── -->
+  <div id="resultScreen">
+    <h2>CRISIS AFGESLOTEN</h2>
+    <div class="rs-sub">EINDRAPPORT — CYBER BV</div>
+    <div class="final-role-badge">
+      <span id="res-icon">?</span>
+      <strong id="res-role">–</strong>
+    </div>
+    <div class="impact-grid">
+      <div class="impact-card money">
+        <div class="ic-header"><span class="ic-icon">💰</span><span class="ic-name">FINANCIEEL</span></div>
+        <div class="ic-bar-wrap"><div class="ic-bar" id="res-bar-money" style="width:50%"></div></div>
+        <div class="ic-desc" id="res-desc-money">–</div>
+      </div>
+      <div class="impact-card rep">
+        <div class="ic-header"><span class="ic-icon">📣</span><span class="ic-name">REPUTATIE</span></div>
+        <div class="ic-bar-wrap"><div class="ic-bar" id="res-bar-rep" style="width:50%"></div></div>
+        <div class="ic-desc" id="res-desc-rep">–</div>
+      </div>
+      <div class="impact-card legal">
+        <div class="ic-header"><span class="ic-icon">⚖️</span><span class="ic-name">JURIDISCH / ETHISCH</span></div>
+        <div class="ic-bar-wrap"><div class="ic-bar" id="res-bar-legal" style="width:50%"></div></div>
+        <div class="ic-desc" id="res-desc-legal">–</div>
+      </div>
+      <div class="impact-card hr">
+        <div class="ic-header"><span class="ic-icon">👥</span><span class="ic-name">MEDEWERKERS</span></div>
+        <div class="ic-bar-wrap"><div class="ic-bar" id="res-bar-hr" style="width:50%"></div></div>
+        <div class="ic-desc" id="res-desc-hr">–</div>
+      </div>
+    </div>
+    <div class="verdict-box">
+      <div class="vb-label">▶ CONCLUSIE</div>
+      <div class="vb-text" id="res-verdict">–</div>
+    </div>
+    <button id="btnRestart">OPNIEUW SPELEN</button>
+  </div>
+</div>
+
+<script>
+// ─── ROLES ───────────────────────────────────────────────────────────────────
+const ROLES = [
+  {
+    id: 'money',
+    icon: '💰',
+    title: 'CFO',
+    sub: 'FINANCIEEL DIRECTEUR',
+    desc: 'Jij bewaakt de financiële gezondheid van CYBER. Elke beslissing heeft een prijskaartje — losgeld, herstelkosten, juridische boetes of reputatieschade die klanten kost. Jij weegt altijd de financiële gevolgen af.',
+    focus: 'Minimaliseer financiële schade, bewaar liquiditeit en voorkom verdere kostbare incidenten.'
+  },
+  {
+    id: 'rep',
+    icon: '📣',
+    title: 'COMMUNICATIEMANAGER',
+    sub: 'PR & REPUTATIE',
+    desc: 'Jij beschermt het imago van CYBER. Een datalek kan het vertrouwen van klanten en partners permanent beschadigen. Transparantie en snelle, duidelijke communicatie zijn jouw wapens.',
+    focus: 'Bewaar het vertrouwen van klanten, pers en partners door proactieve en eerlijke communicatie.'
+  },
+  {
+    id: 'legal',
+    icon: '⚖️',
+    title: 'COMPLIANCE OFFICER',
+    sub: 'JURIDISCH & ETHISCH',
+    desc: 'Jij zorgt dat CYBER de wet naleeft. De AVG verplicht melding van datalekken binnen 72 uur. Losgeld betalen kan financiering van criminelen betekenen. Jij weegt ethische en juridische risico\'s af.',
+    focus: 'Zorg voor naleving van AVG-meldplicht, vermijd strafbare handelingen en bescherm betrokkenen.'
+  },
+  {
+    id: 'hr',
+    icon: '👥',
+    title: 'HR MANAGER',
+    sub: 'HUMAN RESOURCES',
+    desc: 'Jij vertegenwoordigt de 420 medewerkers van CYBER. De aanval veroorzaakt stress, onzekerheid en werkdruk. Eén medewerker wordt verdacht van onachtzaamheid. Hoe ga je om met je mensen?',
+    focus: 'Bescherm medewerkerswelzijn, behoud vertrouwen in het bedrijf en ga eerlijk om met schuld en verantwoordelijkheid.'
+  }
+];
+
+// ─── PHASES / DILEMMAS ───────────────────────────────────────────────────────
+const PHASES = [
+  {
+    phase: 'FASE 1 VAN 4 — HET LOSGELD',
+    title: 'Betalen of niet betalen?',
+    scenario: 'Het is 06:15 uur. Het crisisteam is bijeen. De aanvallers eisen €500.000 in Bitcoin, uiterlijk morgenochtend. De IT-afdeling schat dat herstel zonder betaling 3 tot 6 weken duurt en minstens €800.000 kost. Met betaling kunnen systemen mogelijk al binnen 48 uur hersteld worden — maar er is geen garantie.',
+    question: 'Wat adviseer jij het management?',
+    choices: [
+      {
+        text: 'Losgeld betalen — om schade te beperken en snel operationeel te zijn.',
+        impact: { money: +10, rep: -15, legal: -20, hr: +5 },
+        feedback: {
+          money: '✓ Financieel herstel versneld, maar €500K is van tafel. Verzekeringsmaatschappij kan uitkering weigeren bij betaling.',
+          rep: '⚠ Als dit uitlekt dat je criminelen betaalde, kan dit je imago ernstig schaden. Klanten kunnen afhaken.',
+          legal: '✗ Betaling aan ransomware-groepen kan strafbaar zijn (financiering criminaliteit). Bovendien geen garantie op data-teruggave.',
+          hr: '✓ Sneller herstel betekent minder werkdruk en onzekerheid voor medewerkers.'
+        }
+      },
+      {
+        text: 'Niet betalen — inschakelen forensisch team, eigen herstel opstarten.',
+        impact: { money: -15, rep: +10, legal: +20, hr: -10 },
+        feedback: {
+          money: '⚠ Herstel kost mogelijk meer en duurt langer. Maar je betaalt criminelen niet — en verzekeraar dekt wellicht meer.',
+          rep: '✓ Klanten en pers zien dat je principes hebt en criminelen niet beloont. Sterk signaal.',
+          legal: '✓ Juridisch correct — geen financiering van criminaliteit. AVG-meldplicht blijft wel gelden.',
+          hr: '⚠ Langere herstelperiode zorgt voor stress en overbelasting bij medewerkers.'
+        }
+      },
+      {
+        text: 'Onderhandelaars inschakelen — tijd kopen terwijl herstel gestart wordt.',
+        impact: { money: +5, rep: +5, legal: +5, hr: 0 },
+        feedback: {
+          money: '✓ Slim: tijd kopen zonder direct te betalen. Kan helpen om back-ups te herstellen.',
+          rep: '✓ Pragmatische aanpak zonder direct imago-schade — zolang het niet uitlekt.',
+          legal: '✓ Onderhandelen is juridisch acceptabel, maar betaling moet nog altijd vermeden worden.',
+          hr: '→ Neutraal effect: medewerkers weten nog niet goed waar ze aan toe zijn.'
+        }
+      }
+    ]
+  },
+  {
+    phase: 'FASE 2 VAN 4 — KLANTCOMMUNICATIE',
+    title: 'Wanneer informeren we klanten?',
+    scenario: 'Het forensisch team bevestigt: persoonsgegevens van 50.000 klanten zijn vermoedelijk buitgemaakt (namen, e-mailadressen, rekeningnummers). De AVG schrijft voor dat datalekken met hoog risico gemeld worden bij de Autoriteit Persoonsgegevens binnen 72 uur, en betrokkenen zo snel mogelijk geïnformeerd moeten worden. PR adviseert te wachten op volledig onderzoek voor communicatie naar buiten.',
+    question: 'Wanneer en hoe informeer je de 50.000 getroffen klanten?',
+    choices: [
+      {
+        text: 'Direct en transparant — vandaag nog een melding bij AP en e-mail naar alle klanten.',
+        impact: { money: -5, rep: +20, legal: +25, hr: +5 },
+        feedback: {
+          money: '⚠ Snelle melding zorgt voor mediadruk en mogelijk klantenverlies, maar beperkt juridische boetes.',
+          rep: '✓ Transparantie wordt gewaardeerd. Klanten voelen zich serieus genomen. Proactieve communicatie scoort goed.',
+          legal: '✓ Voldoet aan AVG-meldplicht. Beschermt betrokkenen tijdig. Minimaliseert risico op hoge boetes (max. 4% omzet).',
+          hr: '✓ Medewerkers voelen dat het bedrijf integer handelt — versterkt intern vertrouwen.'
+        }
+      },
+      {
+        text: 'Wachten op volledig onderzoek — pas communiceren als we zeker zijn.',
+        impact: { money: +5, rep: -20, legal: -25, hr: -10 },
+        feedback: {
+          money: '⚠ Tijdelijk minder druk — maar bij lekken naar pers is de schade nóg groter.',
+          rep: '✗ Als het uitkomt dat je wist maar niets zei, is de reputatieschade enorm. Klanten voelen zich bedrogen.',
+          legal: '✗ Ernstige schending van AVG. Boetes tot 4% van jaaromzet mogelijk. Klanten kunnen schadeclaims indienen.',
+          hr: '⚠ Medewerkers in onzekerheid over wat het bedrijf doet — vertrouwen daalt.'
+        }
+      },
+      {
+        text: 'Gerichte communicatie — alleen zwaarst getroffen klanten informeren, rest volgt later.',
+        impact: { money: 0, rep: 0, legal: -5, hr: 0 },
+        feedback: {
+          money: '→ Beperkte directe schade, maar missen van volledige transparantie kan later terugslaan.',
+          rep: '→ Gedeeltelijke openheid — sommige klanten voelen zich achtergesteld als dit uitkomt.',
+          legal: '⚠ AVG vereist melding aan álle betrokkenen met hoog risico. Selectief communiceren is juridisch riskant.',
+          hr: '→ Neutraal — medewerkers hebben geen duidelijk signaal over de bedrijfskoers.'
+        }
+      }
+    ]
+  },
+  {
+    phase: 'FASE 3 VAN 4 — OPERATIES',
+    title: 'Welke systemen mogen door draaien?',
+    scenario: 'Het IT-team stelt vast dat de ransomware zich nog steeds verspreidt via het interne netwerk. Sommige kritieke systemen — waaronder de salarisadministratie, klantenservice en de productielijnen van twee fabrieken — zijn nog actief maar kunnen gevaar lopen. Volledig afsluiten betekent 3 dagen productieverlies (~€2M). Gedeeltelijk doorgaan is riskanter maar goedkoper.',
+    question: 'Welk besluit neem jij over de bedrijfssystemen?',
+    choices: [
+      {
+        text: 'Alles afsluiten — veiligheid voor alles, ook als dat €2M kost.',
+        impact: { money: -20, rep: +10, legal: +15, hr: -5 },
+        feedback: {
+          money: '✗ Zware financiële klap: €2M productiestop plus herstelkosten. Maar verdere infectie wordt gestopt.',
+          rep: '✓ Laat zien dat CYBER verantwoord handelt. "We kozen voor veiligheid" is een sterk verhaal.',
+          legal: '✓ Minimaliseert verdere dataverlies. Toont aan dat je alles deed om schade te beperken — relevant voor AVG.',
+          hr: '⚠ Medewerkers thuis of werkloos — loonbetaling risico als salarisadministratie ook offline gaat.'
+        }
+      },
+      {
+        text: 'Alleen kritieke systemen afsluiten — productie doorgaan om verlies te beperken.',
+        impact: { money: +10, rep: -10, legal: -10, hr: +5 },
+        feedback: {
+          money: '✓ Beperkt direct financieel verlies. Productie draait door. Risico op secundaire infectie blijft.',
+          rep: '⚠ Als een tweede infectiegolf plaatsvindt, is de reputatieschade enorm: "ze wisten het maar deden niks".',
+          legal: '⚠ Risicovol: als meer data gelekt raakt terwijl systemen doorspeelden, is CYBER aansprakelijk.',
+          hr: '✓ Medewerkers kunnen deels gewoon doorwerken — minder onrust en inkomenszekerheid.'
+        }
+      },
+      {
+        text: 'Gesegmenteerd aanpak — productie isoleren van het getroffen netwerksegment.',
+        impact: { money: +5, rep: +5, legal: +10, hr: +5 },
+        feedback: {
+          money: '✓ Slimme balans: beperkt verlies terwijl risico verkleind wordt. Vraagt wel snelle technische expertise.',
+          rep: '✓ Toont professioneel crisismanagement — je doet het goed en verantwoord.',
+          legal: '✓ Aantoonbare maatregelen om verdere schade te beperken — positief in het oog van toezichthouder.',
+          hr: '✓ Medewerkers zien een plan en voelen dat het bedrijf in controle is.'
+        }
+      }
+    ]
+  },
+  {
+    phase: 'FASE 4 VAN 4 — DE MEDEWERKER',
+    title: 'Wie is verantwoordelijk?',
+    scenario: 'Het forensisch onderzoek wijst uit dat de aanval begon via het account van een medewerker (Sanne, 34, klantenservice). Ze klikte op een phishing-link in een nep-e-mail van "HR". Ze had geen kwaad in de zin en was niet getraind in phishing-herkenning. Het bedrijf had wel een securitybeleid maar gaf de afgelopen twee jaar geen bewustwordingstraining. De media speculeren over "een insider".',
+    question: 'Hoe ga je om met Sanne en de interne communicatie?',
+    choices: [
+      {
+        text: 'Sanne ontslaan en publiekelijk de aanval toeschrijven aan menselijke fout.',
+        impact: { money: +5, rep: -15, legal: -20, hr: -25 },
+        feedback: {
+          money: '⚠ Korte termijn: zichtbare actie kalmeerde media. Lange termijn: juridische risico\'s ontslag.',
+          rep: '✗ Klanten en media zien door de afleidingsmanoeuvre heen. Intern vertrouwen in leadership keldert.',
+          legal: '✗ Ontslag zonder gegronde reden en zonder training is juridisch aanvechtbaar. Sanne kan succesvol klagen.',
+          hr: '✗ Medewerkers zijn bang dat zij de volgende zijn. Vertrouwen in bedrijf serieus beschadigd.'
+        }
+      },
+      {
+        text: 'Sanne steunen — het bedrijf neemt verantwoordelijkheid voor ontbrekende training.',
+        impact: { money: -5, rep: +15, legal: +20, hr: +25 },
+        feedback: {
+          money: '⚠ Kosten voor betere training en ondersteuning Sanne. Maar minder juridisch risico op ontslag-claims.',
+          rep: '✓ Sterk signaal: CYBER doet het goed, neemt verantwoordelijkheid en beschermt medewerkers.',
+          legal: '✓ Bedrijf erkent tekortkoming in trainingsplicht — vermindert aansprakelijkheidsrisico en toont goede wil.',
+          hr: '✓ Medewerkers zien dat het bedrijf hen beschermt. Loyaliteit en vertrouwen nemen sterk toe.'
+        }
+      },
+      {
+        text: 'Intern onderzoek starten — geen communicatie naar buiten tot alles duidelijk is.',
+        impact: { money: 0, rep: -5, legal: 0, hr: -5 },
+        feedback: {
+          money: '→ Neutraal — geen direct financieel gevolg, maar media-speculatie loopt door.',
+          rep: '⚠ Stilte wordt uitgelegd als schuld. "Ze verbergen iets" is het verhaal van morgen.',
+          legal: '→ Formeel acceptabel, maar lang wachten terwijl media speculeren vergroot risico op reputatieschade.',
+          hr: '⚠ Sanne en collega\'s zitten in onzekerheid. Geen steun voelt als in de steek gelaten worden.'
+        }
+      }
+    ]
+  }
+];
+
+// ─── ROLE FEEDBACK DESCRIPTIONS ──────────────────────────────────────────────
+const ROLE_VERDICTS = {
+  money: {
+    positive: 'Jij hebt als CFO de financiële schade succesvol beperkt. Door slimme keuzes zijn de totale kosten van dit incident aanzienlijk lager uitgevallen dan gevreesd. Toch blijft investering in preventie de beste ROI.',
+    negative: 'De financiële impact van dit incident is zwaarder dan nodig was. Als CFO had je sommige beslissingen eerder moeten doorrekenen. Cybersecurity-investeringen vooraf zijn altijd goedkoper dan herstelkosten achteraf.'
+  },
+  rep: {
+    positive: 'CYBER\'s reputatie is ondanks de crisis goed overeind gebleven dankzij jouw proactieve communicatieaanpak. Transparantie werd beloond met klantvertrouwen. Excellent crisismanagement.',
+    negative: 'De reputatie van CYBER heeft een flinke knauw gekregen. Communicatieve keuzes kwamen soms te laat of te aarzelend. Snelle, eerlijke communicatie had meer vertrouwen geretourneerd.'
+  },
+  legal: {
+    positive: 'Juridisch heeft CYBER dit incident goed doorstaan. De AVG-verplichtingen zijn nagekomen, aansprakelijkheidsrisico\'s zijn beperkt en er zijn geen strafbare handelingen verricht. Solide compliance.',
+    negative: 'CYBER loopt juridische risico\'s door de genomen beslissingen. Boetes van de Autoriteit Persoonsgegevens zijn mogelijk, en enkele keuzes zijn juridisch aanvechtbaar. Zorg voor betere juridische begeleiding bij toekomstige incidenten.'
+  },
+  hr: {
+    positive: 'De medewerkers van CYBER voelen zich gehoord en gesteund. Jouw HR-beslissingen hebben gezorgd voor behoud van vertrouwen en loyaliteit — een onmisbaar kapitaal in de herstelperiode.',
+    negative: 'Het welzijn van medewerkers heeft tijdens deze crisis te weinig prioriteit gekregen. Onzekerheid en gebrek aan steun kosten CYBER op lange termijn talent en loyaliteit. HR had vroeger en duidelijker moeten handelen.'
+  }
+};
+
+// ─── TIMER ────────────────────────────────────────────────────────────────────
+const TIMER_DURATION = 60;
+const TB_CIRCUMFERENCE = 2 * Math.PI * 22; // r=22 → 138.23
+let timerInterval = null;
+
+function startDiscussionTimer(onComplete) {
+  const banner    = document.getElementById('timerBanner');
+  const ring      = document.getElementById('timerRing');
+  const numEl     = document.getElementById('timerNumber');
+  const skipBtn   = document.getElementById('btnSkipTimer');
+  const tickers   = document.getElementById('sideTickers');
+  const choices   = document.getElementById('choicesList');
+  const dilemma   = document.getElementById('dilemmaPanel');
+
+  // Show banner, hide tickers
+  banner.style.display = 'flex';
+  tickers.style.display = 'none';
+
+  // Lock choices — visible but not clickable
+  choices.classList.add('choices-locked');
+  dilemma.classList.add('panel-locked');
+
+  let remaining = TIMER_DURATION;
+  ring.style.strokeDasharray  = TB_CIRCUMFERENCE;
+  ring.style.strokeDashoffset = 0;
+  ring.classList.remove('urgent');
+  numEl.classList.remove('urgent');
+  numEl.textContent = remaining;
+
+  function finish() {
+    clearInterval(timerInterval);
+    banner.style.display = 'none';
+    tickers.style.display = 'block';
+    choices.classList.remove('choices-locked');
+    dilemma.classList.remove('panel-locked');
+    onComplete();
+  }
+
+  function tick() {
+    remaining--;
+    numEl.textContent = remaining;
+    const progress = remaining / TIMER_DURATION;
+    ring.style.strokeDashoffset = TB_CIRCUMFERENCE * (1 - progress);
+    if (remaining <= 10) {
+      ring.classList.add('urgent');
+      numEl.classList.add('urgent');
+    }
+    if (remaining <= 0) finish();
+  }
+
+  clearInterval(timerInterval);
+  timerInterval = setInterval(tick, 1000);
+  skipBtn.onclick = finish;
+}
+
+
+let assignedRole = null;
+let currentPhase = 0;
+let scores = { money: 50, rep: 50, legal: 50, hr: 50 };
+let selectedChoices = [];
+let answered = false;
+
+// ─── DOM REFS ─────────────────────────────────────────────────────────────────
+const introScreen     = document.getElementById('introScreen');
+const roleRevealScreen= document.getElementById('roleRevealScreen');
+const gameLayout      = document.getElementById('gameLayout');
+const controlsHint    = document.getElementById('controlsHint');
+const resultScreen    = document.getElementById('resultScreen');
+
+// ─── UTILS ────────────────────────────────────────────────────────────────────
+function clamp(v, min, max) { return Math.min(max, Math.max(min, v)); }
+
+function updateBars() {
+  ['money','rep','legal','hr'].forEach(k => {
+    const val = clamp(scores[k], 0, 100);
+    document.getElementById('bar-' + k).style.width = val + '%';
+  });
+}
+
+function updateDots() {
+  for (let i = 0; i < 4; i++) {
+    const dot = document.getElementById('dot' + i);
+    dot.classList.remove('done','active');
+    if (i < currentPhase) dot.classList.add('done');
+    else if (i === currentPhase) dot.classList.add('active');
+  }
+}
+
+// ─── START GAME ───────────────────────────────────────────────────────────────
+document.getElementById('btnStartGame').onclick = () => {
+  // Random role
+  assignedRole = ROLES[Math.floor(Math.random() * ROLES.length)];
+
+  // Fill role reveal
+  document.getElementById('rc-icon').textContent  = assignedRole.icon;
+  document.getElementById('rc-title').textContent = assignedRole.title;
+  document.getElementById('rc-sub').textContent   = assignedRole.sub;
+  document.getElementById('rc-desc').textContent  = assignedRole.desc;
+
+  introScreen.style.display = 'none';
+  roleRevealScreen.style.display = 'block';
+};
+
+document.getElementById('btnStartPlay').onclick = () => {
+  roleRevealScreen.style.display = 'none';
+
+  // Fill sidebar role card
+  document.getElementById('src-icon').textContent  = assignedRole.icon;
+  document.getElementById('src-name').textContent  = assignedRole.title;
+  document.getElementById('src-sub').textContent   = assignedRole.sub;
+  document.getElementById('src-focus').textContent = assignedRole.focus;
+
+  gameLayout.style.display = 'flex';
+  controlsHint.style.display = 'block';
+  scores = { money: 50, rep: 50, legal: 50, hr: 50 };
+  selectedChoices = [];
+  updateBars();
+  updateDots();
+  loadPhase(0);
+};
+
+// ─── LOAD PHASE ───────────────────────────────────────────────────────────────
+function loadPhase(idx) {
+  answered = false;
+  const p = PHASES[idx];
+
+  document.getElementById('sp-phase').textContent   = p.phase;
+  document.getElementById('sp-title').textContent   = p.title;
+  document.getElementById('sp-text').textContent    = p.scenario;
+  document.getElementById('dp-question').textContent = p.question;
+
+  const fb = document.getElementById('feedbackBox');
+  fb.style.display = 'none';
+  fb.className = 'positive';
+  document.getElementById('btnNext').style.display = 'none';
+
+  // Build choices — visible but locked until timer ends via CSS class
+  const list = document.getElementById('choicesList');
+  list.innerHTML = '';
+  p.choices.forEach((c, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'choice-btn';
+    btn.textContent = c.text;
+    btn.onclick = () => selectChoice(i);
+    list.appendChild(btn);
+  });
+
+  updateDots();
+
+  // Start 1-minute discussion timer — unlock choices when done
+  startDiscussionTimer(() => {
+    // choices-locked class removed by timer function — nothing extra needed
+  });
+}
+
+// ─── SELECT CHOICE ────────────────────────────────────────────────────────────
+function selectChoice(idx) {
+  if (answered) return;
+  answered = true;
+
+  const p = PHASES[currentPhase];
+  const choice = p.choices[idx];
+  selectedChoices.push(idx);
+
+  // Apply score changes
+  Object.entries(choice.impact).forEach(([k, v]) => {
+    scores[k] = clamp(scores[k] + v, 0, 100);
+  });
+  updateBars();
+
+  // Style buttons
+  const btns = document.querySelectorAll('.choice-btn');
+  btns.forEach((b, i) => {
+    b.disabled = true;
+    if (i === idx) b.classList.add('selected');
+    else b.classList.add('not-selected');
+  });
+
+  // Show role-specific feedback
+  const roleKey = assignedRole.id;
+  const fbText = choice.feedback[roleKey];
+  const fbSign = fbText.startsWith('✓') ? 'positive' : fbText.startsWith('✗') ? 'negative' : 'neutral';
+
+  const fb = document.getElementById('feedbackBox');
+  fb.className = fbSign;
+  document.getElementById('fb-title').textContent = `JOUW PERSPECTIEF — ${assignedRole.title}`;
+  document.getElementById('fb-text').textContent = fbText;
+  fb.style.display = 'block';
+
+  const btnNext = document.getElementById('btnNext');
+  btnNext.style.display = 'block';
+  if (currentPhase >= PHASES.length - 1) {
+    btnNext.textContent = 'BEKIJK EINDRAPPORT →';
+    btnNext.onclick = showResults;
+  } else {
+    btnNext.textContent = 'VOLGENDE FASE →';
+    btnNext.onclick = () => {
+      currentPhase++;
+      loadPhase(currentPhase);
+    };
+  }
+}
+
+// ─── SHOW RESULTS ─────────────────────────────────────────────────────────────
+function showResults() {
+  gameLayout.style.display = 'none';
+  controlsHint.style.display = 'none';
+
+  const role = assignedRole;
+  document.getElementById('res-icon').textContent = role.icon;
+  document.getElementById('res-role').textContent = role.title + ' — ' + role.sub;
+
+  // Final bar values
+  ['money','rep','legal','hr'].forEach(k => {
+    const val = clamp(scores[k], 0, 100);
+    setTimeout(() => {
+      document.getElementById('res-bar-' + k).style.width = val + '%';
+    }, 200);
+  });
+
+  // Descriptions
+  const descs = {
+    money: scores.money >= 55 ? 'Financiële schade is beperkt gebleven door verstandige keuzes.' : scores.money <= 35 ? 'Zware financiële klap — herstelkosten lopen in de miljoenen.' : 'Gemengd financieel resultaat — enkele kostbare keuzes gemaakt.',
+    rep:   scores.rep   >= 55 ? 'Klantvertrouwen is grotendeels bewaard door transparante aanpak.' : scores.rep <= 35 ? 'Reputatie is ernstig beschadigd — klanten vertrekken naar concurrenten.' : 'Reputatie heeft een knauw gehad maar is herstelbaar.',
+    legal: scores.legal >= 55 ? 'AVG-compliance gehaald, geen boetes verwacht van Autoriteit Persoonsgegevens.' : scores.legal <= 35 ? 'Serieuze juridische risico\'s — boetes en claims zijn waarschijnlijk.' : 'Juridische positie is wankel, maar ergste scenario vermeden.',
+    hr:    scores.hr    >= 55 ? 'Medewerkers voelen zich gesteund — loyaliteit en vertrouwen intact.' : scores.hr <= 35 ? 'Groot verloop dreigt — medewerkers voelen zich verlaten.' : 'Medewerkersstemming is neutraal — er is ruimte voor verbetering.'
+  };
+  Object.entries(descs).forEach(([k, v]) => {
+    document.getElementById('res-desc-' + k).textContent = v;
+  });
+
+  // Verdict based on role
+  const verdict = ROLE_VERDICTS[role.id];
+  const avgScore = (scores.money + scores.rep + scores.legal + scores.hr) / 4;
+  document.getElementById('res-verdict').textContent = avgScore >= 52 ? verdict.positive : verdict.negative;
+
+  resultScreen.style.display = 'block';
+
+  // Dots all done
+  for (let i = 0; i < 4; i++) {
+    const dot = document.getElementById('dot' + i);
+    dot.classList.remove('active');
+    dot.classList.add('done');
+  }
+}
+
+// ─── RESTART ──────────────────────────────────────────────────────────────────
+document.getElementById('btnRestart').onclick = () => {
+  resultScreen.style.display = 'none';
+  assignedRole = null;
+  currentPhase = 0;
+  scores = { money: 50, rep: 50, legal: 50, hr: 50 };
+  selectedChoices = [];
+  for (let i = 0; i < 4; i++) {
+    const dot = document.getElementById('dot' + i);
+    dot.classList.remove('done','active');
+    if (i === 0) dot.classList.add('active');
+  }
+  introScreen.style.display = 'block';
+};
+</script>
+</body>
+</html>

@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>CyberSec Quest</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --bg: #050d14;
+  --neon: #00ffe7;
+  --border: rgba(0,255,231,0.25);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  font-family: 'Share Tech Mono', monospace;
+  color: var(--neon);
+  overflow: hidden;
+}
+#gameWrapper {
+  position: relative;
+  width: 900px;
+  max-width: 100vw;
+}
+#header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 4px;
+}
+#header h1 {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 20px;
+  font-weight: 900;
+  letter-spacing: 3px;
+  color: var(--neon);
+  text-shadow: 0 0 15px var(--neon);
+}
+#progressBar { display: flex; gap: 6px; }
+.prog-dot {
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  border: 2px solid var(--neon);
+  background: transparent;
+  transition: 0.3s;
+}
+.prog-dot.done-correct  { background: #00ff88; border-color: #00ff88; box-shadow: 0 0 8px #00ff88; }
+.prog-dot.done-wrong    { background: #ff4466; border-color: #ff4466; box-shadow: 0 0 8px #ff4466; }
+canvas {
+  display: block;
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 0 40px rgba(0,255,231,0.1), inset 0 0 30px rgba(0,0,0,0.5);
+  cursor: none;
+}
+#controls-hint {
+  text-align: center;
+  font-size: 12px;
+  color: rgba(0,255,231,0.45);
+  padding: 8px 0 4px;
+  letter-spacing: 2px;
+}
+#resultScreen {
+  display: none;
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 620px;
+  max-width: 96vw;
+  background: rgba(5,13,20,0.98);
+  border: 2px solid var(--neon);
+  border-radius: 16px;
+  padding: 52px 44px;
+  text-align: center;
+  z-index: 200;
+  box-shadow: 0 0 80px rgba(0,255,231,0.2);
+  animation: modalIn 0.4s ease;
+}
+@keyframes modalIn {
+  from { transform: translate(-50%,-48%) scale(0.95); opacity:0; }
+  to   { transform: translate(-50%,-50%) scale(1);   opacity:1; }
+}
+#resultScreen h2 {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 30px;
+  margin-bottom: 10px;
+  text-shadow: 0 0 20px var(--neon);
+}
+#resultScreen .subtitle {
+  color: rgba(0,255,231,0.5);
+  font-size: 12px;
+  letter-spacing: 4px;
+  margin-bottom: 32px;
+}
+#resultScreen .complete-icon { font-size: 64px; margin-bottom: 20px; display: block; }
+#resultScreen .complete-msg {
+  font-size: 16px;
+  color: rgba(200,240,255,0.7);
+  line-height: 1.8;
+  margin-bottom: 40px;
+}
+#playAgain {
+  padding: 14px 40px;
+  background: transparent;
+  color: var(--neon);
+  border: 2px solid var(--neon);
+  border-radius: 10px;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+#playAgain:hover {
+  background: var(--neon);
+  color: #020d14;
+  box-shadow: 0 0 20px rgba(0,255,231,0.4);
+}
+#startScreen {
+  position: fixed;
+  inset: 0;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  gap: 0;
+}
+#startScreen .conxion-label {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 13px;
+  letter-spacing: 6px;
+  color: rgba(0,255,231,0.45);
+  margin-bottom: 16px;
+  text-transform: uppercase;
+}
+#startScreen h1 {
+  font-family: 'Orbitron', sans-serif;
+  font-size: clamp(26px, 5vw, 48px);
+  font-weight: 900;
+  letter-spacing: 4px;
+  color: var(--neon);
+  text-shadow: 0 0 30px var(--neon), 0 0 60px rgba(0,255,231,0.3);
+  text-align: center;
+  margin-bottom: 10px;
+  line-height: 1.2;
+}
+#startScreen .tagline {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 13px;
+  letter-spacing: 3px;
+  color: rgba(0,255,231,0.35);
+  margin-bottom: 52px;
+}
+#startScreen .form-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 36px;
+  width: 100%;
+  max-width: 320px;
+}
+#startScreen label {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 4px;
+  color: rgba(0,255,231,0.5);
+  align-self: flex-start;
+}
+#playerName {
+  width: 100%;
+  background: rgba(0,255,231,0.05);
+  border: 2px solid rgba(0,255,231,0.3);
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 15px;
+  color: var(--neon);
+  outline: none;
+  letter-spacing: 2px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+#playerName::placeholder {
+  color: rgba(0,255,231,0.2);
+  letter-spacing: 2px;
+}
+#playerName:focus {
+  border-color: var(--neon);
+  box-shadow: 0 0 16px rgba(0,255,231,0.2);
+}
+#startBtn {
+  padding: 16px 56px;
+  background: transparent;
+  color: var(--neon);
+  border: 2px solid var(--neon);
+  border-radius: 10px;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 4px;
+  cursor: pointer;
+  transition: 0.2s;
+  position: relative;
+  overflow: hidden;
+}
+#startBtn:hover {
+  background: var(--neon);
+  color: #020d14;
+  box-shadow: 0 0 30px rgba(0,255,231,0.5);
+}
+#startBtn:hover::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+  animation: shimmer 0.6s ease;
+}
+@keyframes shimmer {
+  from { transform: translateX(-100%); }
+  to   { transform: translateX(100%); }
+}
+.start-deco {
+  position: absolute;
+  width: 200px;
+  height: 200px;
+  border: 1px solid rgba(0,255,231,0.07);
+  border-radius: 50%;
+  pointer-events: none;
+}
+.start-deco:nth-child(1) { width:340px; height:340px; }
+.start-deco:nth-child(2) { width:500px; height:500px; border-color: rgba(0,255,231,0.04); }
+.start-deco:nth-child(3) { width:680px; height:680px; border-color: rgba(0,255,231,0.025); }
+#gameWrapper::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.06) 2px, rgba(0,0,0,0.06) 4px);
+  z-index: 50;
+  border-radius: 8px;
+}
+</style>
+</head>
+<body>
+<div id="startScreen">
+  <div class="start-deco"></div>
+  <div class="start-deco"></div>
+  <div class="start-deco"></div>
+  <div class="conxion-label">ConXioN</div>
+  <h1>EXPERIENCE<br/>TOUR</h1>
+  <div class="tagline">— CYBERSECURITY QUEST —</div>
+  <div class="form-group">
+    <label for="playerName">JOUW NAAM</label>
+    <input type="text" id="playerName" placeholder="Voer je naam in..." autocomplete="off" maxlength="32"/>
+  </div>
+  <button id="startBtn">START</button>
+</div>
+
+<div id="gameWrapper">
+  <div id="header">
+    <h1>⬡ CYBERSEC QUEST</h1>
+    <div id="progressBar"></div>
+  </div>
+  <canvas id="gameCanvas" width="900" height="560"></canvas>
+  <div id="controls-hint">WASD / PIJLTJES — BEWEGEN &nbsp;|&nbsp; LOOP NAAR JA OF NEE EN BLIJF STAAN OM TE ANTWOORDEN</div>
+
+  <div id="resultScreen">
+    <span class="complete-icon" id="result-icon">🏆</span>
+    <h2 id="result-title">MISSION COMPLETE</h2>
+    <div class="subtitle">ALLE VRAGEN BEANTWOORD</div>
+    <div class="complete-msg" id="result-msg"></div>
+    <button id="playAgain">OPNIEUW SPELEN</button>
+  </div>
+</div>
+
+<script>
+// ─── QUESTIONS ────────────────────────────────────────────────────────────────
+// correct: 'JA' or 'NEE'
+const questions = [
+  {
+    label:   "WACHTWOORD",
+    icon:    "🔑",
+    text:    "Gebruik je speciale tekens in je wachtwoord?",
+    correct: "JA"
+  },
+  {
+    label:   "VARIATIE",
+    icon:    "📱",
+    text:    "Gebruik je voor belangrijke accounts verschillende wachtwoorden?",
+    correct: "JA"
+  },
+  {
+    label:   "SOFTWARE UPDATES",
+    icon:    "⚙️",
+    text:    "Stel je beveiligingsupdates bewust uit om ze later te installeren?",
+    correct: "NEE"
+  },
+  {
+    label:   "PHISHING DETECTIE",
+    icon:    "📧",
+    text:    "Klik je op links in e-mails zonder de afzender te controleren?",
+    correct: "NEE"
+  },
+  {
+    label:   "BACK-UP SYSTEEM",
+    icon:    "💾",
+    text:    "Maak je regelmatig automatische back-ups van je bestanden?",
+    correct: "JA"
+  },
+  {
+    label:   "SOFTWARE BRONNEN",
+    icon:    "🛒",
+    text:    "Download je software van willekeurige, onbekende websites?",
+    correct: "NEE"
+  },
+  {
+    label:   "ANTIVIRUS BESCHERMING",
+    icon:    "🛡️",
+    text:    "Vertrouw je erop dat je computer automatisch veilig is zonder extra beveiliging?",
+    correct: "NEE"
+  },
+  {
+    label:   "BETALINGSVERIFICATIE",
+    icon:    "💳",
+    text:    "Verifieer je onverwachte betalingsverzoeken altijd via een apart kanaal?",
+    correct: "JA"
+  },
+];
+
+// ─── CONSTANTS ────────────────────────────────────────────────────────────────
+const CW = 900, CH = 560, WALL = 50;
+const HOLD_FRAMES = 110;
+const ZONE_W = 240, ZONE_H = 230, ZONE_Y = 180;
+const NEEzone = { x: 80,            y: ZONE_Y, w: ZONE_W, h: ZONE_H, label: 'NEE', color: '#ff4466' };
+const JAzone  = { x: 900-80-ZONE_W, y: ZONE_Y, w: ZONE_W, h: ZONE_H, label: 'JA',  color: '#00ff88' };
+
+// ─── STATE ────────────────────────────────────────────────────────────────────
+let player        = { x: 430, y: 290, w: 24, h: 30, speed: 3 };
+let keys          = {};
+let currentQ      = 0;
+let gameActive    = true;
+let pulseT        = 0;
+let holdZone      = null;
+let holdFrames    = 0;
+let transitioning = false;
+let bannerAnim    = 0;
+let flashMsg      = null;
+let greyedOut     = false;   // true once player answers incorrectly
+let wrongCount    = 0;
+let resultHistory = [];      // 'correct' | 'wrong' per question
+
+const canvas = document.getElementById('gameCanvas');
+const ctx    = canvas.getContext('2d');
+
+// ─── PROGRESS DOTS ────────────────────────────────────────────────────────────
+const pb = document.getElementById('progressBar');
+for (let i = 0; i < questions.length; i++) {
+  const d = document.createElement('div');
+  d.className = 'prog-dot'; d.id = 'dot'+i;
+  pb.appendChild(d);
+}
+function updateDots(idx, wasCorrect) {
+  if (idx > 0) {
+    const dot = document.getElementById('dot'+(idx-1));
+    dot.classList.add(wasCorrect ? 'done-correct' : 'done-wrong');
+  }
+}
+
+// ─── INPUT ────────────────────────────────────────────────────────────────────
+document.addEventListener('keydown', e => { keys[e.key] = true; });
+document.addEventListener('keyup',   e => { keys[e.key] = false; });
+
+// ─── FLOOR PATTERN ───────────────────────────────────────────────────────────
+const off = document.createElement('canvas');
+off.width = 40; off.height = 40;
+const oCtx = off.getContext('2d');
+oCtx.fillStyle = '#071320'; oCtx.fillRect(0,0,40,40);
+oCtx.strokeStyle = 'rgba(0,255,231,0.05)'; oCtx.lineWidth = 1;
+oCtx.strokeRect(0,0,40,40);
+const floorPattern = ctx.createPattern(off, 'repeat');
+
+// ─── HELPERS ──────────────────────────────────────────────────────────────────
+function roundRect(c, x, y, w, h, r) {
+  c.beginPath();
+  c.moveTo(x+r,y); c.lineTo(x+w-r,y); c.quadraticCurveTo(x+w,y,x+w,y+r);
+  c.lineTo(x+w,y+h-r); c.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  c.lineTo(x+r,y+h); c.quadraticCurveTo(x,y+h,x,y+h-r);
+  c.lineTo(x,y+r); c.quadraticCurveTo(x,y,x+r,y);
+  c.closePath();
+}
+function wrapText(c, text, maxW) {
+  const words = text.split(' ');
+  let line = '', lines = [];
+  for (const w of words) {
+    const t = line ? line+' '+w : w;
+    if (c.measureText(t).width > maxW && line) { lines.push(line); line = w; }
+    else line = t;
+  }
+  lines.push(line);
+  return lines;
+}
+
+// ─── DRAW ROOM ────────────────────────────────────────────────────────────────
+function drawRoom() {
+  ctx.fillStyle = '#050d14'; ctx.fillRect(0,0,CW,CH);
+  ctx.save();
+  ctx.translate(WALL,WALL);
+  ctx.fillStyle = floorPattern;
+  ctx.fillRect(0,0,CW-WALL*2,CH-WALL*2);
+  ctx.restore();
+  ctx.fillStyle = '#0a1825';
+  ctx.fillRect(0,0,CW,WALL); ctx.fillRect(0,CH-WALL,CW,WALL);
+  ctx.fillRect(0,0,WALL,CH); ctx.fillRect(CW-WALL,0,WALL,CH);
+  ctx.strokeStyle = 'rgba(0,255,231,0.35)'; ctx.lineWidth = 2;
+  ctx.strokeRect(WALL,WALL,CW-WALL*2,CH-WALL*2);
+  [[WALL,WALL],[CW-WALL,WALL],[WALL,CH-WALL],[CW-WALL,CH-WALL]].forEach(([cx,cy]) => {
+    ctx.strokeStyle = 'rgba(0,255,231,0.6)'; ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(cx-14,cy); ctx.lineTo(cx,cy); ctx.lineTo(cx,cy-14);
+    ctx.moveTo(cx+14,cy); ctx.lineTo(cx,cy); ctx.lineTo(cx,cy+14);
+    ctx.stroke();
+  });
+}
+
+// ─── DRAW ZONE ────────────────────────────────────────────────────────────────
+function drawAnswerZone(zone) {
+  const pulse   = Math.sin(pulseT*0.05)*0.5+0.5;
+  const active  = holdZone === zone.label;
+  const holdPct = active ? holdFrames/HOLD_FRAMES : 0;
+
+  ctx.save();
+
+  const fa = active ? 0.14+holdPct*0.22 : 0.06+pulse*0.03;
+  ctx.fillStyle = zone.color+Math.floor(fa*255).toString(16).padStart(2,'0');
+  roundRect(ctx,zone.x,zone.y,zone.w,zone.h,14); ctx.fill();
+
+  const ba = Math.min(1, 0.3+pulse*0.15+(active?holdPct*0.55:0));
+  ctx.strokeStyle = zone.color+Math.floor(ba*255).toString(16).padStart(2,'0');
+  ctx.lineWidth = active ? 3 : 1.5;
+  roundRect(ctx,zone.x,zone.y,zone.w,zone.h,14); ctx.stroke();
+
+  ctx.strokeStyle = zone.color+(active?'ff':'77'); ctx.lineWidth = 3;
+  [[zone.x,zone.y],[zone.x+zone.w,zone.y],[zone.x,zone.y+zone.h],[zone.x+zone.w,zone.y+zone.h]]
+    .forEach(([cx,cy],i) => {
+      const sx=i%2===0?1:-1, sy=i<2?1:-1;
+      ctx.beginPath();
+      ctx.moveTo(cx+sx*14,cy); ctx.lineTo(cx,cy); ctx.lineTo(cx,cy+sy*14);
+      ctx.stroke();
+    });
+
+  const lsz = active ? 54+holdPct*6 : 46;
+  ctx.font = `900 ${lsz}px 'Orbitron', sans-serif`;
+  ctx.fillStyle = zone.color+(active?'ff':'bb');
+  if (active) { ctx.shadowColor = zone.color; ctx.shadowBlur = 18+holdPct*22; }
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText(zone.label, zone.x+zone.w/2, zone.y+zone.h/2-(active?24:18));
+  ctx.shadowBlur = 0;
+
+  if (active && holdPct > 0) {
+    const acx=zone.x+zone.w/2, acy=zone.y+zone.h/2+24, ar=22;
+    ctx.beginPath(); ctx.arc(acx,acy,ar,0,Math.PI*2);
+    ctx.strokeStyle='rgba(255,255,255,0.12)'; ctx.lineWidth=5; ctx.stroke();
+    ctx.beginPath(); ctx.arc(acx,acy,ar,-Math.PI/2,-Math.PI/2+Math.PI*2*holdPct);
+    ctx.strokeStyle=zone.color; ctx.lineWidth=5; ctx.lineCap='round';
+    ctx.shadowColor=zone.color; ctx.shadowBlur=12; ctx.stroke();
+    ctx.shadowBlur=0; ctx.lineCap='butt';
+  } else {
+    const ha=0.3+pulse*0.2;
+    ctx.font='12px "Share Tech Mono"';
+    ctx.fillStyle=zone.color+Math.floor(ha*255).toString(16).padStart(2,'0');
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText('BLIJF STAAN', zone.x+zone.w/2, zone.y+zone.h/2+26);
+  }
+  ctx.restore();
+}
+
+// ─── DRAW DIVIDER ────────────────────────────────────────────────────────────
+function drawDivider() {
+  const pulse = Math.sin(pulseT*0.03)*0.5+0.5;
+  ctx.save();
+  ctx.strokeStyle=`rgba(0,255,231,${0.1+pulse*0.07})`;
+  ctx.lineWidth=1; ctx.setLineDash([5,9]);
+  ctx.beginPath(); ctx.moveTo(CW/2,ZONE_Y+12); ctx.lineTo(CW/2,ZONE_Y+ZONE_H-12);
+  ctx.stroke(); ctx.setLineDash([]); ctx.restore();
+}
+
+// ─── DRAW QUESTION BANNER ────────────────────────────────────────────────────
+function drawQuestionBanner() {
+  if (transitioning) return;
+  bannerAnim = Math.min(1, bannerAnim+0.045);
+  const q = questions[currentQ];
+  const bx=60, by=64, bw=780, bh=92;
+  const pulse = Math.sin(pulseT*0.04)*0.5+0.5;
+
+  ctx.save();
+  ctx.globalAlpha = bannerAnim;
+
+  ctx.fillStyle='rgba(5,13,20,0.93)';
+  roundRect(ctx,bx,by,bw,bh,10); ctx.fill();
+  ctx.strokeStyle=`rgba(0,255,231,${0.38+pulse*0.28})`;
+  ctx.lineWidth=2; roundRect(ctx,bx,by,bw,bh,10); ctx.stroke();
+
+  // Badge
+  ctx.fillStyle='rgba(0,255,231,0.11)';
+  roundRect(ctx,bx+16,by+13,54,23,5); ctx.fill();
+  ctx.font='11px "Share Tech Mono"';
+  ctx.fillStyle='rgba(0,255,231,0.65)';
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText(`${currentQ+1} / ${questions.length}`, bx+43, by+24.5);
+
+  // Label
+  ctx.font='12px "Share Tech Mono"';
+  ctx.fillStyle='rgba(0,255,231,0.5)';
+  ctx.textAlign='left'; ctx.textBaseline='top';
+  ctx.fillText(`${q.icon}  ${q.label}`, bx+80, by+13);
+
+  // Question text
+  ctx.font='bold 19px "Share Tech Mono"';
+  ctx.fillStyle='#e8f8ff';
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  const lines = wrapText(ctx, q.text, bw-150);
+  lines.forEach((l,i) => {
+    ctx.fillText(l, bx+bw/2, by+bh/2+9+(i-(lines.length-1)/2)*24);
+  });
+
+  ctx.restore();
+}
+
+// ─── DRAW FLASH ───────────────────────────────────────────────────────────────
+function drawFlash() {
+  if (!flashMsg) return;
+  flashMsg.timer--;
+  if (flashMsg.timer <= 0) { flashMsg=null; return; }
+  const a = Math.min(1, flashMsg.timer/22);
+  ctx.save();
+  ctx.globalAlpha = a;
+  ctx.font="bold 22px 'Orbitron', sans-serif";
+  const tw = ctx.measureText(flashMsg.text).width;
+  const px=CW/2-tw/2-22, py=CH/2-24, pw2=tw+44, ph2=48;
+  ctx.fillStyle='rgba(5,13,20,0.92)';
+  roundRect(ctx,px,py,pw2,ph2,9); ctx.fill();
+  ctx.strokeStyle=flashMsg.color; ctx.lineWidth=2;
+  roundRect(ctx,px,py,pw2,ph2,9); ctx.stroke();
+  ctx.fillStyle=flashMsg.color;
+  ctx.shadowColor=flashMsg.color; ctx.shadowBlur=18;
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText(flashMsg.text, CW/2, py+ph2/2);
+  ctx.shadowBlur=0; ctx.restore();
+}
+
+// ─── DRAW PLAYER ─────────────────────────────────────────────────────────────
+function drawPlayer() {
+  const px=player.x, py=player.y, pw=player.w, ph=player.h;
+  const pulse = Math.sin(pulseT*0.08)*0.5+0.5;
+
+  // Color scheme: grey if greyed out, neon otherwise
+  const bodyColor   = greyedOut ? '#2a2a2a' : '#0d2535';
+  const strokeColor = greyedOut ? '#666666' : '#00ffe7';
+  const headColor   = greyedOut ? '#3a3a3a' : '#1a3a4a';
+  const visorColor  = greyedOut
+    ? `rgba(120,120,120,${0.4+pulse*0.15})`
+    : `rgba(0,255,231,${0.4+pulse*0.3})`;
+  const glowColor   = greyedOut ? 'rgba(100,100,100,0.2)' : 'rgba(0,255,231,0.25)';
+
+  // Shadow glow
+  const g = ctx.createRadialGradient(px+pw/2,py+ph,0,px+pw/2,py+ph,20);
+  g.addColorStop(0, glowColor); g.addColorStop(1,'transparent');
+  ctx.fillStyle=g; ctx.fillRect(px-10,py,pw+20,20);
+
+  // Body
+  ctx.fillStyle=bodyColor; ctx.strokeStyle=strokeColor; ctx.lineWidth=2;
+  roundRect(ctx,px+4,py+12,pw-8,ph-12,3); ctx.fill(); ctx.stroke();
+
+  // Head
+  ctx.fillStyle=headColor; ctx.strokeStyle=strokeColor; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.ellipse(px+pw/2,py+8,9,10,0,0,Math.PI*2); ctx.fill(); ctx.stroke();
+
+  // Visor
+  ctx.fillStyle=visorColor;
+  ctx.beginPath(); ctx.ellipse(px+pw/2,py+8,6,4,0,0,Math.PI*2); ctx.fill();
+
+  // Crack / damage mark if greyed
+  if (greyedOut) {
+    ctx.strokeStyle='rgba(255,80,80,0.7)'; ctx.lineWidth=1.5;
+    ctx.beginPath();
+    ctx.moveTo(px+pw/2-2, py+4); ctx.lineTo(px+pw/2+3, py+10);
+    ctx.lineTo(px+pw/2-1, py+14);
+    ctx.stroke();
+  }
+
+  // Legs
+  ctx.strokeStyle=strokeColor; ctx.lineWidth=3;
+  ctx.beginPath();
+  ctx.moveTo(px+pw/2-4,py+ph); ctx.lineTo(px+pw/2-4,py+ph+6);
+  ctx.moveTo(px+pw/2+4,py+ph); ctx.lineTo(px+pw/2+4,py+ph+6);
+  ctx.stroke();
+
+  // Greyed out: static flicker particles
+  if (greyedOut) {
+    ctx.fillStyle='rgba(150,150,150,0.5)';
+    const seed = pulseT % 12;
+    for (let i=0; i<4; i++) {
+      const rx = px + ((seed*7+i*13)%pw);
+      const ry = py + ((seed*11+i*17)%(ph+6));
+      ctx.fillRect(rx, ry, 2, 2);
+    }
+  }
+}
+
+// ─── COLLISION ────────────────────────────────────────────────────────────────
+function isColliding(rx,ry,rw,rh) {
+  return rx<WALL||ry<WALL||rx+rw>CW-WALL||ry+rh>CH-WALL;
+}
+function inZone(zone) {
+  const cx=player.x+player.w/2, cy=player.y+player.h/2;
+  return cx>zone.x&&cx<zone.x+zone.w&&cy>zone.y&&cy<zone.y+zone.h;
+}
+
+// ─── REGISTER ANSWER ─────────────────────────────────────────────────────────
+function registerAnswer(ans) {
+  transitioning=true; holdZone=null; holdFrames=0;
+  const q       = questions[currentQ];
+  const correct = ans === q.correct;
+
+  resultHistory.push(correct ? 'correct' : 'wrong');
+  if (!correct) { greyedOut=true; wrongCount++; }
+
+  // Mark dot
+  const dot = document.getElementById('dot'+currentQ);
+  dot.classList.add(correct ? 'done-correct' : 'done-wrong');
+
+  flashMsg = {
+    text:  correct ? '✓  VEILIG!' : '✗  NIET VEILIG',
+    color: correct ? '#00ff88'     : '#ff4466',
+    timer: 90
+  };
+
+  const next = currentQ+1;
+  setTimeout(() => {
+    player.x=430; player.y=290;
+    if (next >= questions.length) {
+      setTimeout(() => { gameActive=false; showResult(); }, 500);
+    } else {
+      currentQ=next; bannerAnim=0; transitioning=false;
+    }
+  }, 700);
+}
+
+// ─── SHOW RESULT ─────────────────────────────────────────────────────────────
+function showResult() {
+  const correct = resultHistory.filter(r=>r==='correct').length;
+  const total   = questions.length;
+  const pct     = Math.round((correct/total)*100);
+
+  let icon, title, msg;
+  if (pct === 100) {
+    icon='🏆'; title='PERFECT — CYBERPROOF';
+    msg=`Je beantwoordde alle ${total} vragen correct.<br/>Je bent volledig digitaal weerbaar. Uitstekend werk, agent!`;
+  } else if (pct >= 75) {
+    icon='✅'; title='GOED GEDAAN';
+    msg=`Je beantwoordde ${correct} van de ${total} vragen correct.<br/>Nog een paar blinde vlekken, maar je bent goed op weg.`;
+  } else if (pct >= 50) {
+    icon='⚠️'; title='BEWUST — MAAR KWETSBAAR';
+    msg=`Je beantwoordde ${correct} van de ${total} vragen correct.<br/>Je hebt basiskennis, maar er zijn duidelijke risico's.`;
+  } else {
+    icon='🔴'; title='KRITIEK NIVEAU';
+    msg=`Je beantwoordde slechts ${correct} van de ${total} vragen correct.<br/>Je digitale veiligheid heeft dringend aandacht nodig.`;
+  }
+
+  document.getElementById('result-icon').textContent  = icon;
+  document.getElementById('result-title').textContent = title;
+  document.getElementById('result-msg').innerHTML     = msg;
+  document.getElementById('resultScreen').style.display = 'block';
+}
+
+// ─── UPDATE ───────────────────────────────────────────────────────────────────
+function update() {
+  if (!gameActive) return;
+  pulseT++;
+  if (transitioning) return;
+
+  let dx=0,dy=0;
+  if (keys['ArrowLeft'] ||keys['a']||keys['A']) dx-=player.speed;
+  if (keys['ArrowRight']||keys['d']||keys['D']) dx+=player.speed;
+  if (keys['ArrowUp']   ||keys['w']||keys['W']) dy-=player.speed;
+  if (keys['ArrowDown'] ||keys['s']||keys['S']) dy+=player.speed;
+  if (dx&&dy){dx*=0.707;dy*=0.707;}
+
+  const nx=player.x+dx;
+  if (!isColliding(nx,player.y,player.w,player.h+6)) player.x=nx;
+  const ny=player.y+dy;
+  if (!isColliding(player.x,ny,player.w,player.h+6)) player.y=ny;
+
+  const inJA  = inZone(JAzone);
+  const inNEE = inZone(NEEzone);
+
+  if (inJA||inNEE) {
+    const lbl=inJA?'JA':'NEE';
+    if (holdZone===lbl) {
+      holdFrames++;
+      if (holdFrames>=HOLD_FRAMES) registerAnswer(lbl);
+    } else { holdZone=lbl; holdFrames=0; }
+  } else { holdZone=null; holdFrames=0; }
+}
+
+// ─── RENDER ───────────────────────────────────────────────────────────────────
+function render() {
+  ctx.clearRect(0,0,CW,CH);
+  drawRoom();
+  drawAnswerZone(NEEzone);
+  drawAnswerZone(JAzone);
+  drawDivider();
+  drawPlayer();
+  drawQuestionBanner();
+  drawFlash();
+}
+
+function loop() { update(); render(); requestAnimationFrame(loop); }
+
+// ─── RESTART ──────────────────────────────────────────────────────────────────
+document.getElementById('playAgain').onclick = () => {
+  currentQ=0; bannerAnim=0; holdZone=null; holdFrames=0;
+  transitioning=false; flashMsg=null; gameActive=true;
+  greyedOut=false; wrongCount=0; resultHistory=[];
+  player.x=430; player.y=290;
+  for (let i=0;i<questions.length;i++) {
+    const d=document.getElementById('dot'+i);
+    d.className='prog-dot';
+  }
+  document.getElementById('resultScreen').style.display='none';
+};
+
+// ─── START SCREEN ────────────────────────────────────────────────────────────
+document.getElementById('startBtn').onclick = () => {
+  const screen = document.getElementById('startScreen');
+  screen.style.transition = 'opacity 0.5s ease';
+  screen.style.opacity = '0';
+  setTimeout(() => { screen.style.display = 'none'; }, 500);
+};
+document.getElementById('playerName').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('startBtn').click();
+});
+
+loop();
+</script>
+</body>
+</html>
